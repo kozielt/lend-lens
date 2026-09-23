@@ -1,0 +1,19 @@
+.ai/specs/draft/2026-09-23-lend-lens-playground.md
+  s_de10a01f6f19f4::t_0bad6155fc1f9e 454,470,482,490,502,510,518,530,538
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "1789cddba2d7aaa6dc91ec006a49e7724f73f5a2",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

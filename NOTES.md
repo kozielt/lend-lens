@@ -31,7 +31,7 @@ what I expected, what happened, why, and the fix. Newest at the bottom.
 - **Expected:** `/markets/1/NOPE` → HTTP 404.
 - **Happened:** HTTP 200 with the not-found page in the body.
 - **Why:** under Cache Components the reserve symbol is runtime data awaited inside `<Suspense>`. The static shell (and the 200 status line) is already on the wire when `notFound()` throws; the 404 can only be a client-side transition.
-- **Fix:** decide before streaming: in `proxy.ts` (see the proxy task), or restructure so the check happens before any Suspense boundary.
+- **Fix:** decide before streaming, in `proxy.ts`: look the symbol up and `NextResponse.rewrite` unknown ones to a path with no route. That serves the prerendered root `not-found.tsx` with a real 404 (see the proxy entry below). The page's own `notFound()` stays as the fallback and still gives the soft 404 if the proxy lets a request through.
 
 ## 2026-09-23 · Production redacts Server Component error messages
 
@@ -81,3 +81,13 @@ Verified with `docker run -p 3123:3000` and `curl`:
 | `GET /markets` | 307 → `/` |
 | `GET /w/0xabc` | 308 → `/wallet/0xabc` |
 | `GET /lab` | 200 |
+## 2026-09-23 · Proxy `rewrite` to a path with no route is a real 404
+
+- **Expected:** the risky part of the proxy fix: a rewrite might keep the 200, or render something other than my `not-found.tsx`, so I would need a dedicated route that calls `notFound()` before any Suspense.
+- **Happened:** `NextResponse.rewrite(new URL('/__reserve-not-found', request.url))` returns `404 Not Found` with `Content-Length` (not chunked), the root `not-found.tsx` inside the root layout, `<meta name="robots" content="noindex">`, and `x-nextjs-cache: HIT`. RSC requests (`RSC: 1`) get 404 too. No fallback route needed.
+- **Why:** after the proxy, the rewritten path goes through normal routing, matches nothing, and Next serves `/_not-found`, which the build prerendered as static (`○ /_not-found`). A static response has no shell to stream first, so the status line can still say 404. The browser keeps the original URL.
+- **Also:** grepping the HTML for `Not found` is a bad test: every page's RSC payload carries the root not-found tree as the layout's `notFound` slot, so `/` and `/markets/1/WETH` "contain" it too. Grep for the rendered `<h1 …>Not found</h1>` instead.
+- **Also:** the proxy's own-origin `fetch` to `/api/reserves/1` does not loop because the matcher does not cover `/api`. Under `next start`, `request.nextUrl.origin` did not follow a spoofed `Host` header (the fetch still reached the server). The redirect built from `request.nextUrl.clone()` keeps the query string (`/markets/1/weth?x=1` → `/markets/1/WETH?x=1`).
+- **Also:** `/api/reserves/[chainId]` shows as `ƒ` in the route table, not prerendered, despite the handler's comment: the `[chainId]` param makes it dynamic. It is still cheap (~2 ms locally) because `getMarketOverview()` is a `'use cache'` hit.
+- **Cost:** TTFB of `/markets/1/WETH` went from ~1.9 ms to ~4–4.6 ms locally (one extra local HTTP round trip). `time_total` (~67 → ~70 ms) is dominated by the streamed APY chart fetch, so the change is within noise.
+- **Fix / pattern:** unknown → rewrite to a path with no route (404); wrong case → 308 to the canonical symbol; exact → `NextResponse.next()`; if the list cannot be fetched → `NextResponse.next()` and let the page decide (checked by pointing the fetch at `/api/reserves/2`: `/markets/1/NOPE` fell back to the page's soft 404 with 200, `/markets/1/WETH` still rendered, no 500).

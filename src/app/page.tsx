@@ -4,7 +4,8 @@ import { refreshMarkets } from "./actions";
 import { getLiveRates, getMarketOverview } from "@/lib/aave/data";
 import { fmtPct, fmtUsd } from "@/lib/format";
 import { RefreshButton } from "@/components/RefreshButton";
-import { Card, Mode, Skeleton, Stat } from "@/components/ui";
+import { settle } from "@/lib/settle";
+import { Card, Failed, Mode, Skeleton, Stat } from "@/components/ui";
 
 /**
  * Markets overview. Two halves of one page, deliberately in different caching modes:
@@ -14,6 +15,7 @@ import { Card, Mode, Skeleton, Stat } from "@/components/ui";
  *  <LiveRates/>    awaits an uncached fetch → excluded from the shell, streamed in behind Suspense.
  *
  * Load the page with `curl -N` and you see the shell first (with the skeleton), then the chunk.
+ * Each block catches its own upstream failure and renders an inline line (see settle.ts).
  */
 export default function MarketsPage() {
   return (
@@ -38,7 +40,15 @@ export default function MarketsPage() {
 const HEADLINE = ["WETH", "wstETH", "WBTC", "USDC", "USDT", "GHO"];
 
 async function LiveRates() {
-  const { rates, fetchedAt } = await getLiveRates();
+  const result = await settle(getLiveRates(), "Aave API error");
+  if (!result.ok) {
+    return (
+      <Card title="Live rates" aside={<Mode kind="live" />}>
+        <Failed what="could not load live rates" reason={result.reason} />
+      </Card>
+    );
+  }
+  const { rates, fetchedAt } = result.value;
   const rows = HEADLINE.map((s) => rates.find((r) => r.underlyingToken.symbol === s)).filter((r) => r !== undefined);
   return (
     <Card title="Live rates" aside={<Mode kind="live" at={fetchedAt} />}>
@@ -57,7 +67,15 @@ async function LiveRates() {
 }
 
 async function MarketTable() {
-  const market = await getMarketOverview();
+  const result = await settle(getMarketOverview(), "Aave API error");
+  if (!result.ok) {
+    return (
+      <Card title="Reserves" aside={<span className="flex items-center gap-2"><Mode kind="cached" /><RefreshButton action={refreshMarkets} label="Refresh (updateTag)" /></span>}>
+        <Failed what="could not load the reserve list" reason={result.reason} />
+      </Card>
+    );
+  }
+  const market = result.value;
   const reserves = market.reserves.filter((r) => !r.isPaused).sort((a, b) => Number(b.size.usd) - Number(a.size.usd));
   return (
     <Card

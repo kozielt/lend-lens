@@ -34,6 +34,15 @@ export function Mode({ kind, at }: { kind: "cached" | "live" | "static"; at?: st
   );
 }
 
+/** One-line inline failure for a streamed block: the block fails, the page around it does not. */
+export function Failed({ what, reason, hint = "use Refresh to retry" }: { what: string; reason: string; hint?: string }) {
+  return (
+    <p role="status" className="text-xs text-red-500">
+      {what} ({reason}){hint ? <span className="text-muted"> · {hint}</span> : null}
+    </p>
+  );
+}
+
 export function Skeleton({ rows = 3 }: { rows?: number }) {
   return (
     <div className="animate-pulse space-y-2" aria-busy="true" aria-label="Loading">

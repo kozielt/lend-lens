@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { getApyHistory, getReserveBySymbol, MARKET } from "@/lib/aave/data";
 import { fmtNum, fmtPct, fmtUsd } from "@/lib/format";
+import { settle } from "@/lib/settle";
 import { ApyChart } from "@/components/ApyChart";
 import { Card, Mode, Skeleton, Stat } from "@/components/ui";
 
@@ -37,8 +38,9 @@ async function Reserve({ params }: Pick<PageProps<"/markets/[chainId]/[reserve]"
   const reserve = await getReserveBySymbol(decodeURIComponent(symbol));
   if (!reserve) notFound();
 
-  // Not awaited: the promise crosses to the Client Component, which suspends on it.
-  const history = getApyHistory(reserve.underlyingToken.address, "LAST_WEEK");
+  // Not awaited: the promise crosses to the Client Component, which suspends on it. Settled here so
+  // it never rejects: a rejected promise read with use() would throw to the nearest error boundary.
+  const history = settle(getApyHistory(reserve.underlyingToken.address, "LAST_WEEK"), "Aave API error");
   const t = reserve.underlyingToken;
   const b = reserve.borrowInfo;
 

@@ -2,6 +2,8 @@
 
 import { use } from "react";
 import type { ApySample } from "@/lib/aave/types";
+import type { Settled } from "@/lib/settle";
+import { Failed } from "./ui";
 
 type Series = { supply: ApySample[]; borrow: ApySample[] };
 
@@ -9,9 +11,14 @@ type Series = { supply: ApySample[]; borrow: ApySample[] };
  * Client Component that reads a promise created on the server with React's `use()`.
  * The server does not await the history: it hands the promise over, the shell streams,
  * and this component suspends until the data arrives. No useEffect, no loading state of its own.
+ *
+ * The promise is settled on the server (never rejects), so a failed fetch is a value we render
+ * inline, not a throw to an error boundary. See NOTES.md for why not a client error boundary.
  */
-export function ApyChart({ dataPromise }: { dataPromise: Promise<Series> }) {
-  const { supply, borrow } = use(dataPromise);
+export function ApyChart({ dataPromise }: { dataPromise: Promise<Settled<Series>> }) {
+  const result = use(dataPromise);
+  if (!result.ok) return <Failed what="could not load APY history" reason={result.reason} hint="reload the page to retry" />;
+  const { supply, borrow } = result.value;
   const points = [...supply].reverse();
   const bpoints = [...borrow].reverse();
   if (points.length === 0) return <p className="text-sm text-muted">No history for this reserve.</p>;

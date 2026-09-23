@@ -151,3 +151,47 @@ Verified with `docker run -p 3123:3000` and `curl`:
 - **Happened:** `Date`, `Map`, `Set` arrive as real instances (`instanceof` true).
 - **Trap:** `date.toLocaleString()` in a client component runs twice: SSR with the server's timezone/locale, hydration with the browser's. Different output → hydration error, React client-renders up to the nearest boundary. Locally both sides share a timezone, so it only bites in production (UTC server).
 - **Fix:** format on one side (ISO / fixed `timeZone` in `Intl.DateTimeFormat`), or `suppressHydrationWarning` on that one element (the DOM wins, per the docs).
+## 2026-09-23 · Error boundaries do not render during SSR; `curl` never sees `error.tsx`
+
+- **Expected:** with the Aave API down, `curl /wallet/0x…` returns the `error.tsx` markup.
+- **Happened:** 200 with the Suspense skeleton in the HTML; the error (message redacted, `digest` kept) is only in the RSC payload. `error.tsx` renders in the browser after hydration.
+- **Why:** React's server renderer does not run error boundaries. A throw inside a Suspense boundary makes it emit the fallback and leave that subtree to the client, which throws again and hits the boundary.
+- **Fix:** nothing to fix for truly unexpected errors, but it is one more reason to render *expected* failures as state: `<InvalidAddress/>` and the inline "could not …" lines are in the HTML (verified with `curl` against `next start`).
+
+## 2026-09-23 · `use()` on a rejected promise: settle it on the server instead of a client boundary
+
+- **Expected:** the APY chart needs a small client error boundary (class with `getDerivedStateFromError`) around `use(dataPromise)`.
+- **Happened / Why:** three options. (1) A hand-written class boundary would also catch the `notFound()`/`redirect()` signals and only shows up after hydration (see above). (2) `catchError` from `next/error` (stable in 16.3) is the docs' tool for *uncaught* component-level errors: it lets framework signals through and gives `retry()`. (3) The error-handling docs say failed requests are *expected* errors to be modelled as return values.
+- **Fix:** (3). `settle(promise, reason)` in `src/lib/settle.ts` resolves to `{ ok: true, value } | { ok: false, reason }`, so the promise handed to `use()` never rejects and the chart renders `<Failed/>` inline, server-rendered. `reason` is our own string (production would redact the real message anyway); the real error goes to the server log. `catchError` stays the pick if a block ever needs its own retry button.
+
+## 2026-09-23 · A `try/catch` (or `.catch`) must `unstable_rethrow` first
+
+- **Expected:** catching around a data call only sees data errors.
+- **Happened / Why:** per the `unstable_rethrow` docs it can also see `notFound()`/`redirect()` and, for `fetch(…, { cache: 'no-store' })`, the prerender bail-out. `getLiveRates` and `getApyHistory` are exactly such fetches.
+- **Fix:** `settle` calls `unstable_rethrow(err)` at the top of its rejection handler (the docs allow it in a `.catch`); a unit test checks `notFound()` still propagates.
+
+## 2026-09-23 · A cached error reaches even a *server* caller redacted
+
+- **Expected:** `settle` logs `TypeError: fetch failed` for `getMarketOverview()`.
+- **Happened:** on a revalidation it logged "An error occurred in the Server Components render. The specific message is omitted in production builds…" with a digest; the real `TypeError` is logged separately by Next under the same digest.
+- **Why:** a `'use cache'` function runs as its own RSC render and its result (or error) is serialised, so the caller gets the redacted production error, same as a Client Component would.
+- **Fix:** match log lines by digest; never branch on `error.message` of something that came out of a cache scope.
+
+## 2026-09-23 · API down: warm cache degrades, cold cache is a 500, and the build needs the API
+
+- Warm (`pnpm build` normally, then `AAVE_API_URL=http://127.0.0.1:1 pnpm start`): `/` is 200, the shell and `MarketTable` come from the prerender (cached timestamp unchanged), `LiveRates` shows the inline error. Past the 1 min revalidate, the background regeneration fails and the stale entry keeps being served (stale-while-revalidate until the 1 h expire); the failed render is not stored. `/markets/1/WETH`: parameters from the prerender, chart shows its inline error.
+- Cold (prerendered `index.*` removed from `.next/server/app`, same env): `/` is a **500**, even though `MarketTable` catches. An error thrown inside a `'use cache'` function during a prerender fails the whole prerender, caught or not; it is retried on every request and recovers once the API is back (same setup with a working API regenerates `index.*` and returns 200).
+- Build with the API down fails: "Export encountered an error on /markets/1/WETH" (a `generateStaticParams` path; `Reserve` has no catch, and per the above a catch would not help).
+- Possible follow-up, not done: catch inside the cached function and switch it to `cacheLife('seconds')` on failure, so a failure is a short-lived dynamic hole instead of a failed prerender.
+
+## 2026-09-23 · `refresh()` in a Server Action, next to `updateTag`
+
+- **Expected:** `updateTag('wallet:…')` refreshes the whole wallet page, including the uncached on-chain line.
+- **Happened / Why:** per the docs `updateTag`, `revalidatePath` and `refresh` all re-render the current route in the action response, but only `refresh()` says what it is for: dynamic reads that have no tag. It can **only** be called from a Server Action (not a Route Handler); it does not touch cached entries.
+- **Fix:** `refreshWallet` calls both: `updateTag` for positions, `refresh()` for the on-chain line (which is also its retry after an RPC failure).
+
+## 2026-09-23 · `preload` + `React.cache` + a failing call = an unhandled rejection
+
+- **Expected:** `void getOnChainAccount(address)` is a harmless fire-and-forget.
+- **Happened / Why:** if the RPC fails before `<OnChain/>` awaits the memoised promise, nothing has a handler on it yet. With `RPC_URL=http://127.0.0.1:1` the rejection is instant.
+- **Fix:** `getOnChainAccount(address).catch(() => {})` in `preloadAccount`: marks it handled; `<OnChain/>` still sees the rejection on the same promise and renders it inline.

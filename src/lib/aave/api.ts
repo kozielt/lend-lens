@@ -7,7 +7,8 @@ import "server-only";
  * so the endpoint, the queries and the response parsing never reach the browser bundle.
  */
 
-export const AAVE_API = "https://api.v3.aave.com/graphql";
+/** Server-only override (no NEXT_PUBLIC_): point it at a dead port to simulate an API outage. */
+export const AAVE_API = process.env.AAVE_API_URL ?? "https://api.v3.aave.com/graphql";
 
 /** Aave V3 Ethereum core market ("AaveV3Ethereum" in the address book). */
 export const ETHEREUM_CORE_MARKET = {

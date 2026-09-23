@@ -1,12 +1,14 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
+import Link from "next/link";
 import { getAddress, isAddress, type Address } from "viem";
 import { refreshWallet } from "@/app/actions";
 import { getOnChainAccount, getUserPositions, preloadAccount } from "@/lib/aave/data";
 import { computeHealthFactor, formatHealthFactor, healthFactorBand, type HealthFactor } from "@/lib/health";
 import { fmtNum, fmtPct, fmtUsd, shortAddress } from "@/lib/format";
 import { RefreshButton } from "@/components/RefreshButton";
-import { Card, Mode, Skeleton, Stat } from "@/components/ui";
+import { settle } from "@/lib/settle";
+import { Card, Failed, Mode, Skeleton, Stat } from "@/components/ui";
 
 /**
  * Wallet page: /wallet/0x…
@@ -16,7 +18,9 @@ import { Card, Mode, Skeleton, Stat } from "@/components/ui";
  *   chain       uncached viem read, React.cache-deduped         → Aave's own health factor, streamed separately
  *   params      a Promise, awaited inside Suspense              → the shell above stays static
  *
- * A malformed address throws → the sibling error.tsx boundary renders, with a retry button.
+ * A malformed address is an expected error: rendered as <InvalidAddress/>, not thrown (production
+ * would redact a thrown message to a digest). The sibling error.tsx is for unexpected failures only.
+ * The on-chain line catches its own RPC failure, so a dead RPC never takes the tables down.
  */
 export async function generateMetadata(props: PageProps<"/wallet/[address]">): Promise<Metadata> {
   const { address } = await props.params;
@@ -31,17 +35,30 @@ export default function WalletPage(props: PageProps<"/wallet/[address]">) {
   );
 }
 
-class InvalidAddressError extends Error {
-  constructor(input: string) {
-    super(`"${input}" is not an EVM address (expected 0x followed by 40 hex characters).`);
-    this.name = "InvalidAddressError";
+function InvalidAddress({ input }: { input: string }) {
+  return (
+    <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 p-4">
+      <h1 className="font-semibold">Not a wallet address</h1>
+      <p className="mt-1 text-sm text-muted">
+        <code className="break-all font-mono text-foreground">{input}</code> is not an EVM address (expected 0x followed by 40 hex characters).
+      </p>
+      <Link href="/wallet" className="mt-3 inline-block rounded-md border border-border px-3 py-1.5 text-xs font-medium">Pick another address</Link>
+    </div>
+  );
+}
+
+function safeDecode(raw: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    return raw; // malformed %-escape: show it as typed, it is not an address either way
   }
 }
 
 async function Wallet({ params }: Pick<PageProps<"/wallet/[address]">, "params">) {
   const { address: raw } = await params;
-  const input = decodeURIComponent(raw);
-  if (!isAddress(input)) throw new InvalidAddressError(input);
+  const input = safeDecode(raw);
+  if (!isAddress(input)) return <InvalidAddress input={input} />;
   const address: Address = getAddress(input); // checksummed
 
   preloadAccount(address); // kick off the RPC call now; <OnChain/> awaits the same promise later
@@ -117,7 +134,9 @@ function HealthValue({ hf }: { hf: HealthFactor }) {
 }
 
 async function OnChain({ address }: { address: Address }) {
-  const chain = await getOnChainAccount(address);
+  const result = await settle(getOnChainAccount(address), "RPC error");
+  if (!result.ok) return <Failed what="could not read the chain" reason={result.reason} />;
+  const chain = result.value;
   const hf = chain.totalDebtBase === 0n ? "∞" : (Number(chain.healthFactor) / 1e18).toFixed(4);
   return (
     <p className="text-xs text-muted">

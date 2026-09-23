@@ -1,0 +1,51 @@
+NOTES.md
+  s_de10a01f6f19f4::t_b71247c3b24efa 125-153
+src/app/lab/actions.ts
+  s_de10a01f6f19f4::t_669cd041629cf0 1-6
+src/app/lab/boundary/class/error.tsx
+  s_de10a01f6f19f4::t_54e5c6b3c6b8df 1-7
+src/app/lab/boundary/class/page.tsx
+  s_de10a01f6f19f4::t_51aad589e805e4 1-21
+src/app/lab/boundary/function/error.tsx
+  s_de10a01f6f19f4::t_bafd5635dc9062 1-7
+src/app/lab/boundary/function/page.tsx
+  s_de10a01f6f19f4::t_c6bc5ee603a2ee 1-20
+src/app/lab/boundary/page.tsx
+  s_de10a01f6f19f4::t_4a88bafc440d88 1-118
+src/app/lab/boundary/secret.ts
+  s_de10a01f6f19f4::t_9a448d1bbb7dd7 1-6
+src/components/lab/BigintView.tsx
+  s_de10a01f6f19f4::t_455adfdd627334 1-18
+src/components/lab/BuiltinsView.tsx
+  s_de10a01f6f19f4::t_2c62020719335e 1-15
+src/components/lab/Inspect.tsx
+  s_de10a01f6f19f4::t_bc090b79b7a9b2 1-11
+src/components/lab/LabError.tsx
+  s_de10a01f6f19f4::t_e4a15f25fc3602 1-20
+src/components/lab/MoneyView.tsx
+  s_de10a01f6f19f4::t_873651328974b6 1-13
+src/components/lab/PromiseReader.tsx
+  s_de10a01f6f19f4::t_8c3f852ac08e75 1-8
+src/components/lab/ServerFnButton.tsx
+  s_de10a01f6f19f4::t_bcdde59cc3b5e9 1-29
+src/components/lab/Toggle.tsx
+  s_de10a01f6f19f4::t_b64db78bbd92c7 1-16
+src/components/lab/money.ts
+  s_de10a01f6f19f4::t_7ed1255ad8092e 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "43633a4923586c1d948eda185f9ccad6faafd5f7",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

@@ -99,5 +99,7 @@ export async function getUserPositions(address: Address): Promise<UserPositions>
  */
 export const getOnChainAccount = cache(async (address: Address): Promise<OnChainAccountData> => readUserAccountData(address));
 export const preloadAccount = (address: Address) => {
-  void getOnChainAccount(address);
+  // Mark the shared promise as handled: if the RPC fails before <OnChain/> awaits it, that is not
+  // an unhandled rejection. <OnChain/> still sees the rejection on the same (memoised) promise.
+  getOnChainAccount(address).catch(() => {});
 };

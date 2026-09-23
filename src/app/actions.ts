@@ -1,6 +1,6 @@
 "use server";
 
-import { updateTag } from "next/cache";
+import { refresh, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAddress } from "viem";
 import { MARKETS_TAG, walletTag } from "@/lib/aave/data";
@@ -17,9 +17,15 @@ export async function refreshMarkets(): Promise<{ refreshedAt: string }> {
   return { refreshedAt: new Date().toISOString() };
 }
 
+/**
+ * Positions are cached under a tag → `updateTag`. The on-chain line is an uncached read with no tag
+ * to invalidate → `refresh()` (Server Actions only) re-renders the route so it reruns; it is also
+ * the retry for that line when the RPC failed.
+ */
 export async function refreshWallet(address: string): Promise<void> {
   if (!isAddress(address)) return;
   updateTag(walletTag(address));
+  refresh();
 }
 
 /** Progressive enhancement: the wallet form posts here and works with JavaScript disabled. */

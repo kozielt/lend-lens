@@ -43,3 +43,24 @@ export function Skeleton({ rows = 3 }: { rows?: number }) {
     </div>
   );
 }
+
+/**
+ * A lab card: one framework rule, shown as "tried / Next.js said / the fix", with the working
+ * pattern rendered live in `children`.
+ */
+export function Case({ title, tried, said, fix, children }: { title: string; tried: ReactNode; said: ReactNode; fix: ReactNode; children?: ReactNode }) {
+  return (
+    <section className="rounded-lg border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">{title}</h2>
+      <dl className="mt-2 grid gap-2 text-sm md:grid-cols-[7rem_1fr]">
+        <dt className="text-xs uppercase tracking-wide text-muted">Tried</dt>
+        <dd>{tried}</dd>
+        <dt className="text-xs uppercase tracking-wide text-muted">Next.js said</dt>
+        <dd className="font-mono text-xs text-red-500">{said}</dd>
+        <dt className="text-xs uppercase tracking-wide text-muted">The fix</dt>
+        <dd>{fix}</dd>
+      </dl>
+      {children ? <div className="mt-3 rounded-md border border-dashed border-border p-3 text-sm">{children}</div> : null}
+    </section>
+  );
+}

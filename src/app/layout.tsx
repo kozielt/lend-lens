@@ -26,6 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Link>
             <Link href="/" className="text-muted hover:text-foreground">Markets</Link>
             <Link href="/wallet" className="text-muted hover:text-foreground">Wallet</Link>
+            <Link href="/lab" className="text-muted hover:text-foreground">Lab</Link>
             <Link href="/api/reserves/1" className="text-muted hover:text-foreground">API</Link>
             <span className="ml-auto font-mono text-xs text-muted">Aave V3 · Ethereum · Next.js 16</span>
           </nav>

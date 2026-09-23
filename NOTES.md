@@ -58,3 +58,33 @@ what I expected, what happened, why, and the fix. Newest at the bottom.
 - **Happened:** it changed every reload.
 - **Why:** dev re-executes cached functions to give you fresh code; the HMR hash is even part of the cache key.
 - **Fix:** any assertion about caching, streaming chunks or the route table (○ ◐ ƒ) is made against the production server.
+
+## 2026-09-23 · `bigint` props cross the boundary fine
+
+- **Expected:** passing a viem `bigint` to a `'use client'` component throws "not serializable".
+- **Happened:** it arrives as a real `bigint` (`typeof` → `"bigint"`). React 19's RSC payload encodes it as `$n<digits>`.
+- **Why:** React's serializer supports bigint; `JSON.stringify` does not: `TypeError: Do not know how to serialize a BigInt` (Route Handlers, `Response.json`, storage).
+- **Fix:** still format on the server (`formatUnits(wei, 18)`) since decimals live there and the client needs no viem; never JSON-encode a raw bigint. The failing sub-route became `/lab/boundary/function` instead of `/bigint`.
+
+## 2026-09-23 · Function and class-instance props throw at render time
+
+- **Happened (`next dev` log, and `error.message` in dev):**
+  - `Error: Functions cannot be passed directly to Client Components unless you explicitly expose it by marking it with "use server". Or maybe you meant to call this function rather than return it.` followed by `<... value={function value}>`.
+  - `Error: Only plain objects, and a few built-ins, can be passed to Client Components from Server Components. Classes or null prototypes are not supported.` followed by `<... value={{amount: "1.5", symbol: "WETH"}}>`.
+- **Class instance:** does *not* degrade to a plain object; it throws (any prototype other than `Object.prototype`). `{ ...instance }` or picking fields gives plain data; rebuild with `new Money(...)` on the client.
+- **Production:** the boundary gets `Minified React error #441` ("An error occurred in the Server Components render…") plus a `digest`; the real text is only in the server log.
+- **Also:** the failing render must be request-time (`await connection()` inside `<Suspense>`), otherwise the build's prerender hits it. Then the status is 200, and the SSR HTML holds only the Suspense fallback plus the error in the RSC payload: `error.tsx` appears after hydration, so `curl` never shows the boundary text; a browser does.
+
+## 2026-09-23 · `server-only` in a client module is a build error, with two messages
+
+- **Happened (`next build`, Turbopack):** `Error: Turbopack build failed with 2 errors:`
+  - `You're importing a module that depends on "server-only" into a React Client Component module. This API is only available in Server Components but one of its parents is marked with "use client", so this module is also a Client Component.`
+  - `'server-only' cannot be imported from a Client Component module. It should only be used from a Server Component.`
+  - each followed by import traces (Server Component / Client Component Browser / Client Component SSR).
+- **Fix:** import it only from Server Components; hand the result, or a server subtree via `children`, to the client.
+
+## 2026-09-23 · Date/Map/Set cross; locale formatting is the hydration trap
+
+- **Happened:** `Date`, `Map`, `Set` arrive as real instances (`instanceof` true).
+- **Trap:** `date.toLocaleString()` in a client component runs twice: SSR with the server's timezone/locale, hydration with the browser's. Different output → hydration error, React client-renders up to the nearest boundary. Locally both sides share a timezone, so it only bites in production (UTC server).
+- **Fix:** format on one side (ISO / fixed `timeZone` in `Intl.DateTimeFormat`), or `suppressHydrationWarning` on that one element (the DOM wins, per the docs).

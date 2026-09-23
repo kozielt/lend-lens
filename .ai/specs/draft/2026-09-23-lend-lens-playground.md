@@ -459,7 +459,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: None
 - **AC**: `git log` shows the baseline commit; `gh repo view kozielt/lend-lens` is public; fresh `git clone` + `pnpm install && pnpm test && pnpm build` passes.
 
-#### [ ] Task 1.2: Vercel import and live verification
+#### [!] Task 1.2: Vercel import and live verification
 
 - **Repo**: lend-lens (Vercel dashboard; the user clicks Import once)
 - **Scope**: Import the repo at vercel.com/new (framework auto-detected, no env vars). Then verify the live URL: all three pages, both API routes, the Refresh button changes the cached timestamp, `curl -N` shows chunked streaming. Record the URL in the README placeholder and in this spec.
@@ -535,7 +535,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 1.1 (can run in parallel with everything; other tasks append, so land this first to avoid conflicts)
 - **AC**: File exists with seven dated entries in "expected / happened / why / fix" form.
 
-#### [→] Task 4.2: README
+#### [x] Task 4.2: README
 
 - **Repo**: lend-lens
 - **Scope**: README per System Design > "Docs and scripts": intro (lamport-lens style), run/test/build, the "file → concept → how to see it" table covering every file under `src/app` and `src/lib`, deploy (Vercel import, Docker, Hobby caveats, `REVALIDATE_SECRET`), the 13.4 → 15 → 16 caching paragraph, the Vercel-only features list and the "not locked in" note.
@@ -543,7 +543,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Tasks 2.1, 2.2, 3.2, 3.3 (needs the final file list)
 - **AC**: Satisfies "README + notes" AC; every path in the table exists (`ls` each); no mention of anything but the learning purpose.
 
-#### [ ] Task 4.3: Final verification and close-out
+#### [!] Task 4.3: Final verification and close-out
 
 - **Repo**: lend-lens
 - **Scope**: Redeploy (push), run the full `curl` checklist from the README against the live URL and the Docker image; tick the product spec's Success Criteria; move the spec to `.ai/specs/done/`.

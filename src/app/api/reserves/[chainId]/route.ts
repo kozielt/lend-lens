@@ -3,11 +3,13 @@ import { getMarketOverview, MARKET } from "@/lib/aave/data";
 /**
  * Route Handler: GET /api/reserves/1
  *
- * Under Cache Components a GET that only touches cached data is prerendered like a page, so this
- * JSON is served statically and refreshed when the 'markets' tag is invalidated. (Without
- * cacheComponents, GET handlers are dynamic by default since Next 15 and you would write
- * `export const dynamic = 'force-static'` to get the same effect.) `'use cache'` cannot sit on
- * the handler itself; it lives in the helper we call.
+ * The build lists this route as ƒ (dynamic): it awaits `params`, so the handler runs per
+ * request. It is still cheap and consistent because the data comes from the `'use cache'`
+ * entry: two consecutive calls return the same `cachedAt` until the 'markets' tag is
+ * invalidated. (Without cacheComponents, GET handlers are dynamic by default since Next 15
+ * and `export const dynamic = 'force-static'` would prerender them; that export is not
+ * allowed under cacheComponents.) `'use cache'` cannot sit on the handler itself; it lives
+ * in the helper we call.
  */
 export async function GET(_request: Request, ctx: RouteContext<"/api/reserves/[chainId]">) {
   const { chainId } = await ctx.params;

@@ -1,0 +1,21 @@
+.ai/specs/draft/2026-09-23-lend-lens-playground.md
+  s_72514d378499c1::t_2acc7d5e4c1160 462,538,546
+src/app/api/reserves/[chainId]/route.ts
+  s_72514d378499c1::t_78a53d1f075f8a 6-12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4415a8acd37306e2de80550919a5a62e892f8106",
+  "prompts": {},
+  "sessions": {
+    "s_72514d378499c1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a7eea52eaa2aaf8a9",
+        "model": "unknown"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

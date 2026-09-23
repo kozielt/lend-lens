@@ -58,3 +58,26 @@ what I expected, what happened, why, and the fix. Newest at the bottom.
 - **Happened:** it changed every reload.
 - **Why:** dev re-executes cached functions to give you fresh code; the HMR hash is even part of the cache key.
 - **Fix:** any assertion about caching, streaming chunks or the route table (○ ◐ ƒ) is made against the production server.
+
+## 2026-09-23 · Docker: standalone output runs as-is, but `public/` is not optional in the Dockerfile
+
+- **Expected:** the stock multi-stage Dockerfile (`output: 'standalone'`, `node server.js`) builds first time.
+- **Happened:** `next build` inside the image was fine, then `COPY --from=builder /app/public ./public` failed with `"/app/public": not found`. This app has no `public/` folder, and Docker `COPY` does not skip missing sources.
+- **Why:** `.next/standalone` holds `server.js`, the traced `node_modules` and the server bundles, but per the `output` docs it does *not* include `public/` or `.next/static`; you copy them next to `server.js` yourself. The template assumes `public/` exists.
+- **Fix:** `mkdir -p public` in the builder stage after `pnpm build`, so the copy works whether or not the folder exists. Other things that already had to be right: pnpm through `corepack enable` (version from `packageManager`), `pnpm-workspace.yaml` copied with the lockfile, `HOSTNAME=0.0.0.0` so the server is reachable through the published port, and `.env*` kept out of the build context (pass `RPC_URL` / `REVALIDATE_SECRET` with `-e`). The build prerenders from the live Aave API, so `docker build` needs network. Image: `node:22-alpine`, non-root user, 74.5 MB content size.
+- **One difference vs Vercel:** the `use cache` store is per instance. `'use cache'` entries live in the default in-memory LRU handler of this one container (prerendered pages on its disk); nothing is shared between containers, `revalidateTag` only invalidates this instance, and a `docker restart` gave a new `cachedAt` on the next request. On Vercel the cache is shared across instances. Sharing it when self-hosting means a custom `cacheHandlers` entry (Redis etc.).
+
+Verified with `docker run -p 3123:3000` and `curl`:
+
+| Request | Result |
+| --- | --- |
+| `GET /` | 200, `Transfer-Encoding: chunked`, `x-nextjs-postponed: 1`; has "Live rates" and "Reserves". TTFB 7–12 ms, total 125–180 ms (warm) |
+| `GET /_next/static/chunks/*.js` | 200, `Cache-Control: public, max-age=31536000, immutable` |
+| `GET /markets/1/WETH` | 200, has "Reserve parameters" (TTFB 9 ms, total 88 ms) |
+| `GET /markets/1/LINK` | 200, first hit 299 ms (on-demand render), then 86–89 ms |
+| `GET /wallet/0x9886…06EC` | 200, has "Computed here" |
+| `GET /api/reserves/1` | 200 JSON, 67 reserves; two hits return the same `cachedAt` |
+| `POST /api/revalidate` | 200 `{"revalidated":"markets",…}`; next GET still old `cachedAt` (stale), the one after has a new one |
+| `GET /markets` | 307 → `/` |
+| `GET /w/0xabc` | 308 → `/wallet/0xabc` |
+| `GET /lab` | 200 |

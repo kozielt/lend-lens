@@ -1,0 +1,26 @@
+src/app/lab/cache/page.tsx
+  s_de10a01f6f19f4::t_b7f7bb5a689676 1-133
+  s_de10a01f6f19f4::t_80b505d9dd14df 134
+src/lib/lab/cache.ts
+  s_de10a01f6f19f4::t_95e6254d72be87 1-64
+src/app/lab/cache/actions.ts
+  s_de10a01f6f19f4::t_f95cec29e6e87b 1-22
+NOTES.md
+  s_de10a01f6f19f4::t_3447f9a030b10a 61-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "4818ac263ad9ee7c9397a6c291afaf519ad629d6",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

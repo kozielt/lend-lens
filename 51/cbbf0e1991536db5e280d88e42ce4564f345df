@@ -1,0 +1,49 @@
+.gitignore
+  s_de10a01f6f19f4::t_bc9246dc7a357f 1-41
+README.md
+  s_de10a01f6f19f4::t_f28e0babbc4e82 1-36
+eslint.config.mjs
+  s_de10a01f6f19f4::t_d55d2bed348780 1-18
+next.config.ts
+  s_de10a01f6f19f4::t_d318b1a7ad09a4 1-7
+package.json
+  s_de10a01f6f19f4::t_169cb890ee6917 1-27
+pnpm-workspace.yaml
+  s_de10a01f6f19f4::t_8822ca3b4cc89c 1-3
+postcss.config.mjs
+  s_de10a01f6f19f4::t_af02410ea546e2 1-7
+public/file.svg
+  s_de10a01f6f19f4::t_b9d09ae40e9f40 1
+public/globe.svg
+  s_de10a01f6f19f4::t_e7534399b2d3e0 1
+public/next.svg
+  s_de10a01f6f19f4::t_d1c340a9509f09 1
+public/vercel.svg
+  s_de10a01f6f19f4::t_ca4f71043f0910 1
+public/window.svg
+  s_de10a01f6f19f4::t_b89ffc0eab0969 1
+src/app/globals.css
+  s_de10a01f6f19f4::t_4efec100b2eaad 1-26
+src/app/layout.tsx
+  s_de10a01f6f19f4::t_dbd4dbf37db13d 1-29
+src/app/page.tsx
+  s_de10a01f6f19f4::t_e2fdec16e3939c 1-69
+tsconfig.json
+  s_de10a01f6f19f4::t_3cefdeee0ff7d9 1-34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "51cbbf0e1991536db5e280d88e42ce4564f345df",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

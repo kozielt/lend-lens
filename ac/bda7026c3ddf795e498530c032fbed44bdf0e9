@@ -1,0 +1,23 @@
+.dockerignore
+  s_de10a01f6f19f4::t_8e984912504a94 7-12
+Dockerfile
+  s_de10a01f6f19f4::t_6a61f2a5699dac 3-6,9,14,23-25,29-30,33-34,37
+NOTES.md
+  s_de10a01f6f19f4::t_15e4d6e10ff4f8 61-83
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "acbda7026c3ddf795e498530c032fbed44bdf0e9",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

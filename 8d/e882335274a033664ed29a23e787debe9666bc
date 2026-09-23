@@ -1,0 +1,51 @@
+NOTES.md
+  s_de10a01f6f19f4::t_02f0f51f4b41e1 61-90
+src/app/lab/actions.ts
+  s_de10a01f6f19f4::t_61c8302f598ecd 1-6
+src/app/lab/boundary/class/error.tsx
+  s_de10a01f6f19f4::t_11e3128e63033c 1-7
+src/app/lab/boundary/class/page.tsx
+  s_de10a01f6f19f4::t_e6975eba5c5bb3 1-21
+src/app/lab/boundary/function/error.tsx
+  s_de10a01f6f19f4::t_10b28aab01305e 1-7
+src/app/lab/boundary/function/page.tsx
+  s_de10a01f6f19f4::t_3c5ceebe8f49b7 1-20
+src/app/lab/boundary/page.tsx
+  s_de10a01f6f19f4::t_dfe22641f4a119 1-118
+src/app/lab/boundary/secret.ts
+  s_de10a01f6f19f4::t_401c47cb59abcc 1-6
+src/components/lab/BigintView.tsx
+  s_de10a01f6f19f4::t_0b3f2d1e8b8c2a 1-18
+src/components/lab/BuiltinsView.tsx
+  s_de10a01f6f19f4::t_c67a351e9e8b53 1-15
+src/components/lab/Inspect.tsx
+  s_de10a01f6f19f4::t_eb8ee619c976fc 1-11
+src/components/lab/LabError.tsx
+  s_de10a01f6f19f4::t_bbf874bce79bbf 1-20
+src/components/lab/MoneyView.tsx
+  s_de10a01f6f19f4::t_e6e86443afda91 1-13
+src/components/lab/PromiseReader.tsx
+  s_de10a01f6f19f4::t_8523821407e120 1-8
+src/components/lab/ServerFnButton.tsx
+  s_de10a01f6f19f4::t_1e40593b3ddcd4 1-29
+src/components/lab/Toggle.tsx
+  s_de10a01f6f19f4::t_4dca7613f70c32 1-16
+src/components/lab/money.ts
+  s_de10a01f6f19f4::t_c3a20b5f8bc190 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "8de882335274a033664ed29a23e787debe9666bc",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "unknown"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

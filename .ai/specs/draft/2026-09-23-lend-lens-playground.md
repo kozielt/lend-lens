@@ -451,7 +451,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 
 > The existing app is committed, on GitHub, deployed on Vercel, and runs in Docker. Everything after this is visible on the live site as it lands.
 
-#### [ ] Task 1.1: Commit the baseline and publish the repo
+#### [x] Task 1.1: Commit the baseline and publish the repo
 
 - **Repo**: lend-lens
 - **Scope**: Commit the current working tree (scaffold + app + tests + Dockerfile + this spec) on `main`; create the public GitHub repo `kozielt/lend-lens` with `gh`; push. Add `REVALIDATE_SECRET` to `.env.example`.
@@ -467,7 +467,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 1.1
 - **AC**: Satisfies "Deploy to a public URL" AC from the product spec, checked with `curl` against the live URL; results pasted into NOTES.md.
 
-#### [ ] Task 1.3: Docker verification
+#### [x] Task 1.3: Docker verification
 
 - **Repo**: lend-lens
 - **Scope**: `docker build` from a clean checkout and `docker run -p 3000:3000`; fix anything the standalone output is missing (pnpm workspace file, `public/`, static assets). Confirm streaming and `use cache` behave as under `next start`.
@@ -479,7 +479,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 
 > Unknown reserves are real 404s, bad addresses explain themselves in production, and a failing upstream never takes a whole page down.
 
-#### [ ] Task 2.1: Reserve 404 and case canonicalisation in the proxy
+#### [x] Task 2.1: Reserve 404 and case canonicalisation in the proxy
 
 - **Repo**: lend-lens
 - **Scope**: Implement System Design > "Failure classification" bullet 1: proxy matcher for `/markets/:chainId/:reserve`, own-origin fetch of `/api/reserves/1`, `rewrite` to a non-existent route for unknown symbols, 308 to the canonical case. Resolve the two proxy risks in System Design > Risks (status code of the rewrite; no loop through `/api`). Keep `notFound()` in the page.
@@ -487,7 +487,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 1.1 (front-loaded: this is the riskiest item)
 - **AC**: `curl -o /dev/null -w '%{http_code}' /markets/1/NOPE` → 404 with the not-found page body; `/markets/1/weth` → 308 → `/markets/1/WETH`; `/markets/1/WETH` still partially prerendered per `next build` output; `/api/*` unaffected.
 
-#### [ ] Task 2.2: Expected errors as state; inline failures for streamed blocks
+#### [x] Task 2.2: Expected errors as state; inline failures for streamed blocks
 
 - **Repo**: lend-lens
 - **Scope**: System Design > "Failure classification" bullets 2–4: `<InvalidAddress/>` rendered state on the wallet page; `error.tsx` keeps generic message + digest + `retry`; `OnChain`, `LiveRates` and the APY chart catch their own failures and render an inline line; `refreshWallet` also calls `refresh()`. Simulate failures with a bogus `RPC_URL` and a bogus API URL via env override for the test run.
@@ -499,7 +499,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 
 > Two teaching pages under `/lab`, linked from the nav, each card showing "tried / framework said / fix" live.
 
-#### [ ] Task 3.1: Lab index and nav
+#### [x] Task 3.1: Lab index and nav
 
 - **Repo**: lend-lens
 - **Scope**: `/lab` static index with cards for the two drills (links may 404 until 3.2/3.3 land); "Lab" link in the root layout nav; `Case` card component in `src/components/ui.tsx` used by both drills (title, tried, said, fix, children slot).
@@ -507,7 +507,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 1.1
 - **AC**: `/lab` renders static (○ in build output); nav link present; `Case` component exported.
 
-#### [ ] Task 3.2: Boundary drill
+#### [x] Task 3.2: Boundary drill
 
 - **Repo**: lend-lens
 - **Scope**: `/lab/boundary` per System Design > Architecture: cards for bigint, function, Date/Map/Set, class instance, promise + `use()`, `children` slot through a client wrapper, `server-only` import (text only). Sub-routes `/lab/boundary/bigint` and `/lab/boundary/class` that intentionally fail, each with its own `error.tsx`. Record the exact dev-mode messages in `NOTES.md`.
@@ -515,7 +515,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 3.1
 - **AC**: Satisfies "Drill: the server/client boundary" AC; `next build` passes with the failing sub-routes present (they fail at request time, inside their boundary); parent `/lab/boundary` never shows the boundary.
 
-#### [ ] Task 3.3: Cache-key drill
+#### [x] Task 3.3: Cache-key drill
 
 - **Repo**: lend-lens
 - **Scope**: `src/lib/lab/cache.ts` with `stamp`, `stampClosure`, `stampPrivate`, `stampShort` as in System Design; `/lab/cache` page with the cards; Server Functions `updateTag('lab')` and a cookie toggle (`httpOnly`, `sameSite=lax`); buttons reuse `RefreshButton`. Resolve the `'use cache: private'` / `cacheLife('seconds')` risk (inline profile fallback) and note the outcome.
@@ -527,7 +527,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 
 > README maps every file to the concept it proves; NOTES has the surprises; spec moved to done.
 
-#### [ ] Task 4.1: NOTES.md seed
+#### [x] Task 4.1: NOTES.md seed
 
 - **Repo**: lend-lens
 - **Scope**: Create `NOTES.md` with the entry format and the seven entries listed in System Design > "Docs and scripts". Other tasks append to it.
@@ -535,7 +535,7 @@ the same files are serialised below. Every task ends with `pnpm test && pnpm lin
 - **Dependencies**: Task 1.1 (can run in parallel with everything; other tasks append, so land this first to avoid conflicts)
 - **AC**: File exists with seven dated entries in "expected / happened / why / fix" form.
 
-#### [ ] Task 4.2: README
+#### [→] Task 4.2: README
 
 - **Repo**: lend-lens
 - **Scope**: README per System Design > "Docs and scripts": intro (lamport-lens style), run/test/build, the "file → concept → how to see it" table covering every file under `src/app` and `src/lib`, deploy (Vercel import, Docker, Hobby caveats, `REVALIDATE_SECRET`), the 13.4 → 15 → 16 caching paragraph, the Vercel-only features list and the "not locked in" note.

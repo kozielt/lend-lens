@@ -91,3 +91,34 @@ Verified with `docker run -p 3123:3000` and `curl`:
 - **Also:** `/api/reserves/[chainId]` shows as `ƒ` in the route table, not prerendered, despite the handler's comment: the `[chainId]` param makes it dynamic. It is still cheap (~2 ms locally) because `getMarketOverview()` is a `'use cache'` hit.
 - **Cost:** TTFB of `/markets/1/WETH` went from ~1.9 ms to ~4–4.6 ms locally (one extra local HTTP round trip). `time_total` (~67 → ~70 ms) is dominated by the streamed APY chart fetch, so the change is within noise.
 - **Fix / pattern:** unknown → rewrite to a path with no route (404); wrong case → 308 to the canonical symbol; exact → `NextResponse.next()`; if the list cannot be fetched → `NextResponse.next()` and let the page decide (checked by pointing the fetch at `/api/reserves/2`: `/markets/1/NOPE` fell back to the page's soft 404 with 200, `/markets/1/WETH` still rendered, no 500).
+## 2026-09-23 · Closed-over variables are part of a `'use cache'` key
+
+- **Expected:** an inner `async () => { 'use cache'; … who … }` with no arguments has one entry.
+- **Happened:** `who = alice` and `who = bob` got separate entries (`#5`, `#6`); a second `alice` call was a hit (`#5` again).
+- **Why:** the compiler lifts the inner function out and binds every captured variable as a hidden argument, so captures are serialized into the key like arguments. Module-level variables are not captured (the run counter `n` is shared state, not key).
+- **Fix:** nothing to fix; just know it. Keep captures small and serializable; a captured class instance or function fails like an argument would.
+
+## 2026-09-23 · `'use cache: private'` is the only cache scope that may read cookies
+
+- **Expected:** "private" = stored per user on the server.
+- **Happened / Why:** it may read `cookies()`, `headers()`, `searchParams` (not `connection()`). It runs at request time, is excluded from the static shell, and is **never stored on the server** across requests: only deduped within one request and kept by the client router for its `stale` time. `next start`: timestamp and `#n` changed on every GET; `curl -b 'lab-theme=dark'` rendered "dark".
+- **Fix:** render it under `<Suspense>`; give it an explicit `cacheLife` (`{ stale: 30 }` here: at least 30 s so per-link prefetch still works).
+
+## 2026-09-23 · `cookies()` inside a plain `'use cache'`
+
+- **Expected:** a build error.
+- **Happened:** `next dev` rendered the route (200) and logged: "Error: Route /lab/cache/broken used \`cookies()\` inside "use cache". Accessing Dynamic data sources inside a cache scope is not supported. If you need this data inside a cached function use \`cookies()\` outside of the cached function and pass the required dynamic data in as an argument." (`next-request-in-use-cache`, `environmentName: 'Cache'`). The docs warn that on a dynamic route it can pass `next build` and only fail under `next start`.
+- **Fix:** read the cookie outside and pass the value in (it joins the key), or use `'use cache: private'`. The broken route was deleted after capturing the message.
+
+## 2026-09-23 · `cacheLife('seconds')` builds fine; no inline-profile fallback needed
+
+- **Expected:** the planned risk: `next build` might reject `seconds`.
+- **Happened:** build passed, `/lab/cache` is ◐, and the HTML has exactly two streamed holes (`B:0`, `B:1`): the private card and the `seconds` card. Everything `minutes` is in the shell. Under `next start` the `seconds` stamp re-ran on the first GET more than 1 s after the previous one (not stale-once), while `minutes` stamps did not move.
+- **Fix:** none. `seconds` must sit under `<Suspense>`; that is the whole requirement.
+
+## 2026-09-23 · `updateTag` vs `revalidateTag(tag, 'max')`, observed
+
+- **Expected:** both "refresh the data".
+- **Happened:** `updateTag('lab')` from a button: the same action response re-rendered every `lab` stamp with a new `#n` (`#3` → `#19`). `revalidateTag('lab', 'max')` from a button: the page kept `#19`; the next GET still served `#19`, the one after served `#27` (fresh). Also, the first GET after `next start` served the build-time stamps (over a minute old) and regenerated in the background: the route shell itself is stale-while-revalidate at the `minutes` rate.
+- **Why:** `updateTag` expires the tag now and the next read blocks (read-your-own-writes; Server Actions only). `revalidateTag(…, 'max')` only marks it stale: the next reader gets the old entry while the refresh runs.
+- **Fix:** `updateTag` for "user just changed this", `revalidateTag(…, 'max')` for webhooks and Route Handlers.

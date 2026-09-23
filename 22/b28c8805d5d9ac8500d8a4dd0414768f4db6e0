@@ -1,0 +1,21 @@
+NOTES.md
+  s_de10a01f6f19f4::t_c825bf5c9777f3 34,61-71
+src/proxy.ts
+  s_de10a01f6f19f4::t_44d00fee429b47 5-12,14-19,27-28,32-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "22b28c8805d5d9ac8500d8a4dd0414768f4db6e0",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}

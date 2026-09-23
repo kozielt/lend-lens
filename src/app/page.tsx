@@ -1,69 +1,117 @@
-import Image from "next/image";
+import { Suspense } from "react";
+import Link from "next/link";
+import { refreshMarkets } from "./actions";
+import { getLiveRates, getMarketOverview } from "@/lib/aave/data";
+import { fmtPct, fmtUsd } from "@/lib/format";
+import { RefreshButton } from "@/components/RefreshButton";
+import { Card, Mode, Skeleton, Stat } from "@/components/ui";
 
-export default function Home() {
+/**
+ * Markets overview. Two halves of one page, deliberately in different caching modes:
+ *
+ *  <MarketTable/>  reads a 'use cache' function → part of the prerendered shell, served from cache,
+ *                  invalidated by the Refresh button (updateTag) or after a minute (cacheLife).
+ *  <LiveRates/>    awaits an uncached fetch → excluded from the shell, streamed in behind Suspense.
+ *
+ * Load the page with `curl -N` and you see the shell first (with the skeleton), then the chunk.
+ */
+export default function MarketsPage() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight">Aave V3 · Ethereum core market</h1>
+        <p className="text-sm text-muted">
+          Each block says how it was produced: <Mode kind="static" /> is in the prerendered shell, <Mode kind="cached" /> comes from{" "}
+          <code>&apos;use cache&apos;</code>, <Mode kind="live" /> is fetched on every request and streamed in.
+        </p>
+      </div>
+      <Suspense fallback={<Card title="Live rates"><Skeleton rows={2} /></Card>}>
+        <LiveRates />
+      </Suspense>
+      <Suspense fallback={<Card title="Reserves"><Skeleton rows={8} /></Card>}>
+        <MarketTable />
+      </Suspense>
     </div>
+  );
+}
+
+const HEADLINE = ["WETH", "wstETH", "WBTC", "USDC", "USDT", "GHO"];
+
+async function LiveRates() {
+  const { rates, fetchedAt } = await getLiveRates();
+  const rows = HEADLINE.map((s) => rates.find((r) => r.underlyingToken.symbol === s)).filter((r) => r !== undefined);
+  return (
+    <Card title="Live rates" aside={<Mode kind="live" at={fetchedAt} />}>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        {rows.map((r) => (
+          <Stat
+            key={r.underlyingToken.address}
+            label={r.underlyingToken.symbol}
+            value={<span className="text-green-500">{fmtPct(r.supplyInfo.apy.value)}</span>}
+            hint={r.borrowInfo ? <>borrow {fmtPct(r.borrowInfo.apy.value)} · util {fmtPct(r.borrowInfo.utilizationRate.value, 0)}</> : "not borrowable"}
+          />
+        ))}
+      </div>
+    </Card>
+  );
+}
+
+async function MarketTable() {
+  const market = await getMarketOverview();
+  const reserves = market.reserves.filter((r) => !r.isPaused).sort((a, b) => Number(b.size.usd) - Number(a.size.usd));
+  return (
+    <Card
+      title={
+        <>
+          Reserves · {market.name} · {fmtUsd(market.totalMarketSize)} supplied
+        </>
+      }
+      aside={
+        <span className="flex items-center gap-2">
+          <Mode kind="cached" at={market.cachedAt} />
+          <RefreshButton action={refreshMarkets} label="Refresh (updateTag)" />
+        </span>
+      }
+    >
+      <div className="overflow-x-auto">
+        <table className="tabular w-full text-sm">
+          <thead className="text-left text-xs text-muted">
+            <tr>
+              <th className="py-1 pr-3 font-medium">Asset</th>
+              <th className="py-1 pr-3 text-right font-medium">Supplied</th>
+              <th className="py-1 pr-3 text-right font-medium">Borrowed</th>
+              <th className="py-1 pr-3 text-right font-medium">Supply APY*</th>
+              <th className="py-1 pr-3 text-right font-medium">Borrow APY*</th>
+              <th className="py-1 pr-3 text-right font-medium">Max LTV</th>
+              <th className="py-1 pr-3 text-right font-medium">Liq. threshold</th>
+              <th className="py-1 font-medium">Flags</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reserves.map((r) => (
+              <tr key={r.underlyingToken.address} className="border-t border-border">
+                <td className="py-1.5 pr-3">
+                  <Link href={`/markets/${market.chain.chainId}/${r.underlyingToken.symbol}`} className="font-medium hover:text-accent">
+                    {r.underlyingToken.symbol}
+                  </Link>
+                  <span className="ml-2 text-xs text-muted">{r.underlyingToken.name}</span>
+                </td>
+                <td className="py-1.5 pr-3 text-right">{fmtUsd(r.size.usd)}</td>
+                <td className="py-1.5 pr-3 text-right">{r.borrowInfo ? fmtUsd(r.borrowInfo.total.usd) : "–"}</td>
+                <td className="py-1.5 pr-3 text-right">{fmtPct(r.supplyInfo.apy.value)}</td>
+                <td className="py-1.5 pr-3 text-right">{r.borrowInfo ? fmtPct(r.borrowInfo.apy.value) : "–"}</td>
+                <td className="py-1.5 pr-3 text-right">{fmtPct(r.supplyInfo.maxLTV.value, 0)}</td>
+                <td className="py-1.5 pr-3 text-right">{fmtPct(r.supplyInfo.liquidationThreshold.value, 0)}</td>
+                <td className="py-1.5 text-xs text-muted">
+                  {r.supplyInfo.canBeCollateral ? "collateral " : ""}
+                  {r.isFrozen ? "frozen" : ""}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="mt-2 text-xs text-muted">* APY as of the cache entry above; the panel on top is the live value.</p>
+    </Card>
   );
 }

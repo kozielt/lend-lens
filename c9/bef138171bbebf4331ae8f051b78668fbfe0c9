@@ -1,0 +1,23 @@
+src/app/lab/page.tsx
+  s_de10a01f6f19f4::t_79277c6961d631 1-36
+src/app/layout.tsx
+  s_de10a01f6f19f4::t_1c96b9127ec398 29
+src/components/ui.tsx
+  s_de10a01f6f19f4::t_a318122e8b2096 46-66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "c9bef138171bbebf4331ae8f051b78668fbfe0c9",
+  "prompts": {},
+  "sessions": {
+    "s_de10a01f6f19f4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bd10039f-26a8-4a52-b443-6d71c7d3505b",
+        "model": "claude-fable-5-1"
+      },
+      "human_author": "kozielt <koziel1t@gmail.com>"
+    }
+  }
+}
